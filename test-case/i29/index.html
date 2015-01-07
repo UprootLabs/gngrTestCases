@@ -1,0 +1,14 @@
+<html>
+  <script>
+    function deal(e) {
+      window.open("about:blank", 800, 600);
+    }
+
+    window.onload = deal;
+  </script>
+  <body>
+    <p>This test currently just triggers a potential problem in JS. If not handled correctly, it causes an infinite loop
+    in JS later. See issue #29 on GH</p>
+    <p>The part that triggers the inifinite loop is not yet known.</p>
+  </body>
+</html>

@@ -24,6 +24,27 @@
       ctx.closePath();
     };
     
+    var makePolygon = function(ctx, pts, radius) {
+      if (radius > 0) {
+        pts = getRoundedPoints(pts, radius);
+      }
+      var i, pt, len = pts.length;
+      var path = new Path2D();
+      for (i = 0; i < len; i++) {
+        pt = pts[i];
+        if (i == 0) {
+          path.moveTo(pt[0], pt[1]);
+        } else {
+          path.lineTo(pt[0], pt[1]);
+        }
+        if (radius > 0) {
+          path.quadraticCurveTo(pt[2], pt[3], pt[4], pt[5]);
+        }
+      }
+      path.closePath();
+      return path;
+    };
+    
     var getRoundedPoints = function(pts, radius) {
       var i1, i2, i3, p1, p2, p3, prevPt, nextPt,
           len = pts.length,
@@ -80,6 +101,12 @@
                         [280, 120]], 10);
       ctx.stroke();
 
+      ctx.translate(0, 200);
+      ctx.strokeStyle = "red"
+      ctx.stroke(makePolygon(ctx, [[340,  20],
+                        [400, 120],
+                        [280, 120]], 10)
+      );
     }
 
   </script>

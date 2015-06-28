@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8"/>
+  <script type="application/javascript">
+    function draw() {
+      var canvas = document.getElementById("canvas");
+      if (canvas.getContext) {
+        var ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "rgb(200,0,0)";
+        ctx.fillRect (10, 10, 55, 50);
+
+        ctx.fillStyle = "rgb(0,200,0)";
+        ctx.fillRect (15, 15, 5, 5);
+
+        ctx.fillStyle = "rgb(0,0,200)";
+        ctx.fillRect (25, 15, 5, 5);
+
+        var imgData = ctx.getImageData(0, 0, 40, 40);
+        for (i = 0; i < 800; i+=4) {
+          imgData.data[i+2] = 200;
+          imgData.data[i+3] = 55;
+        }
+        ctx.putImageData(imgData, 130, 30);
+      }
+    }
+    window.onload = function() {
+      draw();
+    }
+  </script>
+ </head>
+ <body style="background: #ffc;">
+   <canvas id="canvas" width="250" height="200" style="border:8px solid blue;"></canvas>
+ </body>
+</html>

@@ -1,0 +1,186 @@
+<html>
+<title>Subresource Integrity</title>
+<script src="testharness.js"></script>
+<script src="testharnessreport.js"></script>
+
+<div id="log"></div>
+
+<div id="container"></div>
+
+<script>
+    var xorigin_anon_script = 'crossorigin-anon-script.js';
+    var xorigin_creds_script = 'crossorigin-creds-script.js?acao_port='
+    var xorigin_ineligible_script = 'crossorigin-ineligible-script.js';
+
+    var SRIScriptTest = function(pass, name, src, integrityValue, crossoriginValue) {
+        this.pass = pass;
+        this.name = "Script: " + name;
+        this.src = src;
+        this.integrityValue = integrityValue;
+        this.crossoriginValue = crossoriginValue;
+    }
+
+    SRIScriptTest.prototype.execute = function() {
+        var test = async_test(this.name);
+        var e = document.createElement("script");
+        e.src = this.src;
+        e.setAttribute("integrity", this.integrityValue);
+        if(this.crossoriginValue) {
+            e.setAttribute("crossorigin", this.crossoriginValue);
+        }
+        if(this.pass) {
+            e.addEventListener("load", function() {test.done()});
+            e.addEventListener("error", function() {
+                test.step(function(){ assert_unreached("Good load fired error handler.") })
+            });
+        } else {
+           e.addEventListener("load", function() {
+             console.log("Hello there");
+                test.step(function() { assert_unreached("Bad load succeeded.") })
+            });
+           e.addEventListener("error", function() {test.done()});
+        }
+        document.body.appendChild(e);
+    };
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with correct sha256 hash.",
+        "matching-digest.js",
+        "sha256-U9WYDtBWkcHx13+9UKk/3Q5eoqDc4YGxYb07EPWzb9E="
+        ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with correct sha384 hash.",
+        "matching-digest.js",
+        "sha384-BDRTPSywZFyxfLEAzaLcL4FfERBgJgXfEkuT0r04LG93Yqn1PWNYPZMomaqEfE3H"
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with correct sha512 hash.",
+        "matching-digest.js",
+        "sha512-geByvIIRspbnUnwooKGNNCb39nvg+EW0O9hDScTXeo/9pVZztLSUYU3LNV6H0lZapo8bCJUpyPPLAzE9fDzpxg=="
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with empty integrity.",
+        "matching-digest.js",
+        ""
+    ).execute();
+
+    new SRIScriptTest(
+        false,
+        "Same-origin with incorrect hash.",
+        "non-matching-digest.js",
+        "sha256-deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdead"
+    ).execute();
+
+        new SRIScriptTest(
+        true,
+        "Same-origin with multiple sha256 hashes, including correct.",
+        "matching-digest.js",
+        "sha256-U9WYDtBWkcHx13+9UKk/3Q5eoqDc4YGxYb07EPWzb9E= sha256-deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdead"
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with multiple sha256 hashes, including unknown algorithm.",
+        "matching-digest.js",
+        "sha256-U9WYDtBWkcHx13+9UKk/3Q5eoqDc4YGxYb07EPWzb9E= foo666-deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdead"
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with sha256 mismatch, sha512 match",
+        "matching-digest.js",
+        "sha512-geByvIIRspbnUnwooKGNNCb39nvg+EW0O9hDScTXeo/9pVZztLSUYU3LNV6H0lZapo8bCJUpyPPLAzE9fDzpxg== sha256-deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdead"
+    ).execute();
+
+    new SRIScriptTest(
+        false,
+        "Same-origin with sha256 match, sha512 mismatch",
+        "matching-digest.js",
+        "sha512-deadbeefspbnUnwooKGNNCb39nvg+EW0O9hDScTXeo/9pVZztLSUYU3LNV6H0lZapo8bCJUpyPPLAzE9fDzpxg== sha256-U9WYDtBWkcHx13+9UKk/3Q5eoqDc4YGxYb07EPWzb9E="
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "<crossorigin='anonymous'> with correct hash, ACAO: *",
+        xorigin_anon_script,
+        "sha256-51AjITq701Y0yKSx3/UoIKtIY2UQ9+H8WGyyMuOWOC0=",
+        "anonymous"
+    ).execute();
+
+    new SRIScriptTest(
+        false,
+        "<crossorigin='anonymous'> with incorrect hash, ACAO: *",
+        xorigin_anon_script,
+        "sha256-deadbeefcSLlbFZCj1OACLxTxVck2TOrBTEdUbwz1yU=",
+        "anonymous"
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "<crossorigin='use-credentials'> with correct hash, CORS-eligible",
+        xorigin_creds_script,
+        "sha256-IaGApVboXPQxVSm2wVFmhMq1Yu37gWklajgMdxKLIvc=",
+        "use-credentials"
+    ).execute();
+
+    new SRIScriptTest(
+        false,
+        "<crossorigin='use-credentials'> with incorrect hash CORS-eligible",
+        xorigin_creds_script,
+        "sha256-deadbeef2S+pTRZgiw3DWrhC6JLDlt2zRyGpwH7unU8=",
+        "use-credentials"
+    ).execute();
+
+    /*
+    new SRIScriptTest(
+        false,
+        "<crossorigin='anonymous'> with CORS-ineligible resource",
+        xorigin_ineligible_script,
+        "sha256-F5fXKTX7SiWjtgybxiBZIo2qhh2WiQnNx372E60XrOo=",
+        "anonymous"
+    ).execute();
+    */
+
+    new SRIScriptTest(
+        false,
+        "Cross-origin, not CORS request, with correct hash",
+        xorigin_anon_script,
+        "sha256-51AjITq701Y0yKSx3/UoIKtIY2UQ9+H8WGyyMuOWOC0="
+    ).execute();
+
+    new SRIScriptTest(
+        false,
+        "Cross-origin, not CORS request, with hash mismatch",
+        xorigin_anon_script,
+        "sha256-deadbeef01Y0yKSx3/UoIKtIY2UQ9+H8WGyyMuOWOC0="
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Cross-origin, empty integrity",
+        xorigin_anon_script,
+        ""
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with correct hash, options.",
+        "matching-digest.js",
+        "sha256-U9WYDtBWkcHx13+9UKk/3Q5eoqDc4YGxYb07EPWzb9E=?foo=bar?spam=eggs"
+    ).execute();
+
+    new SRIScriptTest(
+        true,
+        "Same-origin with unknown algorithm only.",
+        "matching-digest.js",
+        "foo666-U9WYDtBWkcHx13+9UKk/3Q5eoqDc4YGxYb07EPWzb9E="
+    ).execute();
+</script>
+  </html>

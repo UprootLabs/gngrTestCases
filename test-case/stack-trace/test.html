@@ -1,0 +1,82 @@
+<html>
+<script>
+function get_script_url()
+    {
+        if (!('document' in self)) {
+            return undefined;
+        }
+
+        var scripts = document.getElementsByTagName("script");
+        for (var i = 0; i < scripts.length; i++) {
+            var src;
+            if (scripts[i].src) {
+                src = scripts[i].src;
+            } else if (scripts[i].href) {
+                //SVG case
+                src = scripts[i].href.baseVal;
+            }
+
+            var matches = src && src.match(/^(.*\/|)testharness\.js$/);
+            if (matches) {
+                return src;
+            }
+        }
+        return undefined;
+    }
+function getStack() {
+  var stack = new Error().stack;
+  console.log("standard stack:" + stack);
+  // console.log("standard stack:" + (Error.captureStackTrace({})));
+  // IE11 does not initialize 'Error.stack' until the object is thrown.
+  if (!stack) {
+    try {
+      throw new Error();
+    } catch (e) {
+      console.log("Capturing stack from thrown");
+      stack = e.stack;
+    }
+  }
+
+  // 'Error.stack' is not supported in all browsers/versions
+  if (!stack) {
+    return "(Stack trace unavailable)";
+  }
+
+  var lines = stack.split("\n");
+
+  // Create a pattern to match stack frames originating within testharness.js.  These include the
+  // script URL, followed by the line/col (e.g., '/resources/testharness.js:120:21').
+  // Escape the URL per http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
+  // in case it contains RegExp characters.
+  var script_url = get_script_url();
+  var re_text = script_url ? script_url.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') : "\\btestharness.js";
+  var re = new RegExp(re_text + ":\\d+:\\d+");
+
+  // Some browsers include a preamble that specifies the type of the error object.  Skip this by
+  // advancing until we find the first stack frame originating from testharness.js.
+  var i = 0;
+  while (!re.test(lines[i]) && i < lines.length) {
+    i++;
+  }
+
+  // Then skip the top frames originating from testharness.js to begin the stack at the test code.
+  while (re.test(lines[i]) && i < lines.length) {
+    i++;
+  }
+
+  // Paranoid check that we didn't skip all frames.  If so, return the original stack unmodified.
+  if (i >= lines.length) {
+    return stack;
+  }
+
+  return lines.slice(i).join("\n");
+}
+window.onload = function() {
+  console.log("stack: " + getStack());
+}
+</script>
+
+  <body>
+    <p>This test should show stack trace in console</p>
+  </body>
+</html>

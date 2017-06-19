@@ -35,7 +35,6 @@
             });
         } else {
            e.addEventListener("load", function() {
-             console.log("Hello there");
                 test.step(function() { assert_unreached("Bad load succeeded.") })
             });
            e.addEventListener("error", function() {test.done()});

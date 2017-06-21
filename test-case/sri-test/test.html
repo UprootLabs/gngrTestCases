@@ -192,7 +192,7 @@
     var xorigin_anon_style = "crossorigin-anon-style.css?"
     var xorigin_creds_style = "crossorigin-creds-style.css?acao_port=";
     var xorigin_ineligible_style = 'crossorigin-ineligible-style.css?';
-    var colorRegEx = /(rgb.*$)|(#......)/;
+    var colorRegEx = /(rgb\(.*\)$)|(#......)/;
 
     var SRIStyleTest = function(queue, pass, name, attrs, customCallback, altPassValue) {
         this.pass = pass;
